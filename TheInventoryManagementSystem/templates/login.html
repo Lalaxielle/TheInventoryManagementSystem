@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ title }}{% endblock %} · {{ appName }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-banner">
+        <div class="brand-mark">ITEQ</div>
+        <div class="brand-text">
+          <b>The Inventory</b>
+          <span>Management System</span>
+        </div>
+      </div>
+
+      <div class="login-panel">
+      <h1 class="login-title">Log In</h1>
+      <p class="login-sub">Sign in to manage, monitor and track every IT device.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}"><span>{{ message }}</span>
+            <button class="flash-x" type="button" title="Dismiss">&times;</button></div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label class="field">
+          <span>Username</span>
+          <input type="text" name="username" autofocus required autocomplete="username"
+                 placeholder="username" value="{{ request.form.get('username', '') }}">
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input type="password" name="password" required autocomplete="current-password"
+                 placeholder="password">
+        </label>
+        <button class="btn btn-solid" type="submit">Login</button>
+      </form>
+      </div>
+    </div>
+
+    <div class="login-foot">The Inventory Management System &middot; IT Equipment Management</div>
+  </div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
