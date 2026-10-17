@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<p class="section-title">Devices per location &mdash; click a card to see what is stored there</p>
+
+<div class="loc-grid">
+  {% for g in groups %}
+    <details class="loc-card">
+      <summary>
+        <div>
+          <div class="loc-name">{{ g.location }}</div>
+          <div class="loc-sub">
+            {% for status, count in g.by_status.items() %}
+              {{ count }} {{ status|lower }}{{ ', ' if not loop.last }}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="loc-count">{{ g.total }}</div>
+      </summary>
+      <div class="loc-body">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Model</th><th>Brand</th><th>Assigned</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% for r in by_location.get(g.location, []) %}
+                <tr>
+                  <td>
+                    <span class="cell-main">{{ r.get('model') }}</span>
+                    <span class="cell-sub">{{ r.get('asset_tag') or 'No tag' }}</span>
+                  </td>
+                  <td>{{ r.get('brand') or '-' }}</td>
+                  <td>{{ r.get('assigned_to') or '-' }}</td>
+                  <td><span class="status {{ status_class(r.get('status')) }}">{{ r.get('status') }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  {% else %}
+    <p class="muted">No equipment recorded yet.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}
