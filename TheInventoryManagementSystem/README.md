@@ -2,7 +2,7 @@
 
 A centralized **IT Equipment Management System** for recording, monitoring and
 managing every IT device in the organization - built with a plain **HTML**
-frontend, a **Python (Flask)** backend,**Supabase** as the database and **Vercel** for Web Hosting.
+frontend, a **Python (Flask)** backend, **Supabase** as the database and **Vercel** for Web Hosting.
 
 Theme: **Black / White / Grey** - flat, utilitarian, high-contrast.
 
