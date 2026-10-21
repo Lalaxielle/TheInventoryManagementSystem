@@ -3,6 +3,8 @@
 A centralized **IT Equipment Management System** for recording, monitoring and
 managing every IT device in the organization - built with a plain **HTML**
 frontend, a **Python (Flask)** backend, **Supabase** as the database and **Vercel** for web hosting.
+The source code can be maintained in a **GitHub repository** and connected to
+Vercel for deployment.
 
 Theme: **Black / White / Grey** - flat, utilitarian, high-contrast.
 
