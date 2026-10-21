@@ -70,20 +70,22 @@ activity history, so every page is populated immediately.
 > **server-side only** - it is never sent to the browser. Every table has RLS
 > enabled with no policies, so the public anon key can read/write nothing.
 
-## FAQ assistant and Apache deployment
+## Qeti and deployment security
 
 The signed-in admin assistant answers questions about using the website and,
 for relevant questions, retrieves a limited read-only context from equipment,
 loan, maintenance, and activity-log records. It does not modify records or
-retrieve account credentials. Relevant record details may be sent to Google's Gemini API to
+retrieve account credentials. Record lookups are restricted to signed-in admin
+sessions. Relevant record details may be sent to Google's Gemini API to
 generate the reply; do not enter passwords, API keys, or unrelated private
 information in chat. To enable it, create a Gemini API key in Google AI Studio
-and set `GEMINI_API_KEY` in the project-root `.env` or `.env.local` file; optionally change `GEMINI_MODEL`
-(defaults to `gemini-3.5-flash-lite`). `.env.local` takes precedence over `.env`,
-while process environment variables take precedence over both. Install
-dependencies with `pip install -r requirements.txt`; the backend uses Google's
-official `google-genai` Python SDK. The key is never sent to the browser. The
-endpoint requires the user's session and CSRF token and is rate-limited.
+and set `GEMINI_API_KEY` in the project-root `.env` or `.env.local` file;
+optionally change `GEMINI_MODEL` (defaults to `gemini-3.5-flash-lite`).
+`.env.local` takes precedence over `.env`, while process environment variables
+take precedence over both. Install dependencies with
+`pip install -r requirements.txt`; the backend uses Google's official
+`google-genai` Python SDK. The key is never sent to the browser. The endpoint
+requires the user's session and CSRF token and is rate-limited.
 
 The chat widget in `templates/base.html` is connected by `static/js/app.js` to
 the signed-in Flask `/api/chat` endpoint. The endpoint restricts record context
@@ -105,12 +107,35 @@ before enabling it; free-tier content may be used to improve Google's products.
 The Flask app applies browser security headers (Content Security Policy,
 clickjacking protection, MIME sniffing protection, referrer and permissions
 policies) directly, whether or not Apache is installed. HSTS is sent only over
-HTTPS. For an Apache 2.4 deployment, use `apache/inventory-vhost.conf` as a
-starting point for additional server-level hardening and the HTTPS reverse
-proxy. Replace the example domain and certificate paths, enable the listed
-Apache modules, and review the TLS settings for your Apache version. Run the
-Flask app behind Apache with a production WSGI server, not Flask's development
-server:
+HTTPS.
+
+### Vercel deployment
+
+Vercel Firewall rules are configured in the dashboard for the Vercel project
+and apply to traffic reaching that project. For example, a rule can match
+`/api/chat` and rate-limit repeated requests. Firewall rate limits are commonly
+IP-based, so set a limit that accounts for users sharing a network; the Flask
+endpoint also applies its own per-session limit.
+
+Keep secrets out of the repository. Add required values such as
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, and `SECRET_KEY`
+in the Vercel project's Environment Variables settings. Never commit `.env` or
+`.env.local`, and rotate any key that has been exposed.
+
+This application uses Flask. At the time of writing, this repository does not
+include a `vercel.json` or a Vercel-specific Python entry point, so uploading
+the files alone does not configure a working Vercel deployment. Confirm the
+required Flask runtime/build configuration for your Vercel project and check
+deployment logs before relying on it in production. Apache settings below do
+not apply to Vercel.
+
+### Apache deployment
+
+For a server you control, use `apache/inventory-vhost.conf` as a starting
+point for Apache 2.4 server-level hardening and the HTTPS reverse proxy.
+Replace the example domain and certificate paths, enable the listed Apache
+modules, and review the TLS settings for your Apache version. Run the Flask app
+behind Apache with a production WSGI server, not Flask's development server:
 
 ```bash
 pip install -r requirements.txt
@@ -123,7 +148,7 @@ On Linux, export `SESSION_COOKIE_SECURE=1` and `TRUST_PROXY=1` in the service
 environment instead of using `set`. Keep port 5000 bound to loopback and
 firewalled from external access; Apache terminates HTTPS and applies the
 security headers. This Apache configuration applies only to deployments that
-actually use Apache; it does not change a Vercel deployment.
+actually use Apache.
 
 ### Creating / resetting the admin login
 
