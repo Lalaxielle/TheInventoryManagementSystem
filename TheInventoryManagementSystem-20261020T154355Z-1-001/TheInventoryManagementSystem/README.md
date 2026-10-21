@@ -8,6 +8,18 @@ Vercel for deployment.
 
 Theme: **Black / White / Grey** - flat, utilitarian, high-contrast.
 
+## Objectives
+
+- Centralize IT equipment records, including asset tags, assignment, location,
+  condition, and warranty details.
+- Support equipment lifecycle workflows for borrowing, returns, and maintenance.
+- Help administrators monitor inventory through dashboards, search, filters,
+  warranty tracking, and location views.
+- Provide CSV/PDF reports and an activity log to support operational review
+  and accountability.
+- Protect administrative access and database credentials with session-based
+  authentication, CSRF validation, and server-side Supabase access.
+
 ## Features
 
 | Page | What it does |
@@ -22,21 +34,21 @@ Theme: **Black / White / Grey** - flat, utilitarian, high-contrast.
 | **Reports** | Summary tables (status, category, brand, location, warranty) + CSV exports + printable report |
 | **Activity Log** | Full audit trail of who did what and when |
 
-## Quick start (no Supabase needed - DEMO mode)
+## Quick start (Supabase required)
 
 ```bash
 cd TheInventoryManagementSystem
 pip install -r requirements.txt
+py scripts/check_supabase.py
 py app.py
 ```
 
-Open <http://127.0.0.1:5000> and sign in with **admin / admin123**.
+Before starting the app, create the Supabase tables and configure
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the project-root `.env` file
+as described below. Open <http://127.0.0.1:5000> after the connection check
+succeeds.
 
-In DEMO mode everything is stored in `data/inventory.db` (SQLite) and
-auto-seeded with 17 sample IT devices, maintenance jobs, borrowings and
-activity history, so every page is populated immediately.
-
-## Connecting Supabase (production mode)
+## Supabase setup
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **SQL Editor → New query**: paste the whole of `database/setup_all.sql`
@@ -65,8 +77,8 @@ activity history, so every page is populated immediately.
    It confirms the API answers, that every table exists, and that an admin
    login is present - with a clear hint for anything missing.
 
-5. Restart `py app.py`. The sidebar chip switches from *Demo mode* to
-   *Supabase connected* - the app now reads and writes your Supabase tables.
+5. Start or restart `py app.py`. The app reads and writes records in your
+  Supabase project.
 
 > The service-role key bypasses Row Level Security, so it must stay
 > **server-side only** - it is never sent to the browser. Every table has RLS
@@ -113,23 +125,16 @@ HTTPS.
 
 ### Vercel deployment
 
-Vercel Firewall rules are configured in the dashboard for the Vercel project
-and apply to traffic reaching that project. For example, a rule can match
-`/api/chat` and rate-limit repeated requests. Firewall rate limits are commonly
-IP-based, so set a limit that accounts for users sharing a network; the Flask
-endpoint also applies its own per-session limit.
-
 Keep secrets out of the repository. Add required values such as
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, and `SECRET_KEY`
 in the Vercel project's Environment Variables settings. Never commit `.env` or
 `.env.local`, and rotate any key that has been exposed.
 
-This application uses Flask. At the time of writing, this repository does not
-include a `vercel.json` or a Vercel-specific Python entry point, so uploading
-the files alone does not configure a working Vercel deployment. Confirm the
-required Flask runtime/build configuration for your Vercel project and check
-deployment logs before relying on it in production. Apache settings below do
-not apply to Vercel.
+This application uses Flask. The repository does not include a `vercel.json`
+or a Vercel-specific Python entry point. The existing Vercel deployment must
+therefore have the appropriate runtime/build configuration in its project
+settings. Check deployment logs after changes. Apache settings below do not
+apply to Vercel.
 
 ### Apache deployment
 
@@ -158,7 +163,7 @@ actually use Apache.
 py scripts/create_admin.py admin "ChangeMe123!" "Administrator"
 ```
 
-Works in both DEMO and Supabase mode.
+Configure the Supabase environment variables before running this command.
 
 ## Project structure
 
@@ -170,10 +175,8 @@ TheInventoryManagementSystem/
 ├── backend/
 │   ├── models.py              # statuses, warranty logic, filters, aggregates
 │   ├── security.py            # PBKDF2 hashing, CSRF tokens
-│   ├── store.py               # store factory (Supabase or SQLite)
-│   ├── sqlite_store.py        # DEMO-mode store (+ auto schema & seed)
+│   ├── store.py               # configured data-store factory
 │   ├── supabase_store.py      # Supabase PostgREST store
-│   └── seed.py                # sample data used by DEMO mode
 ├── templates/                 # plain HTML (Jinja) pages
 │   ├── base.html              # sidebar + topbar shell
 │   ├── login.html  dashboard.html  equipment.html
@@ -212,3 +215,4 @@ TheInventoryManagementSystem/
 - **Schedule** maintenance dated today or earlier (or press *Start*) → status
   becomes *Under Maintenance*; **complete** or delete the job → status reverts.
 - Everything is written to the **Activity Log** automatically.
+
